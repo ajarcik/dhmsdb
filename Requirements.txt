@@ -1,0 +1,10 @@
+gspread
+re 
+time 
+collection 
+Counter
+
+1. For G-Spread Auth  see: https://docs.gspread.org/en/v6.0.0/oauth2.html#enable-api-access-for-a-project (look at For Bots: Using Service Account)
+2. Make sure the 'service_account.json' is in the same directory as the rest of the application files 
+3. Make sure you access to the email you share the created Google Sheet with
+4. Only run the CreateDatabaseSpreadsheet ONCE (as running it more than once would cause errors)

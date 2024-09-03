@@ -1,0 +1,14 @@
+8/2/2024
+This purpose of this file is to provide instructions and/or thought flow 
+whenever I was coding these functions files out. 
+
+1. Have a QR Code survery connected to a Google Form which dumps into a Google Sheets file. 
+2. Get the information loaded automated to Google Sheets
+3. Create a Google Sheets tab with the date
+4. Copy the data from the Google Form sheet to the corresponding Google Sheets tab with the right date
+6. Copy the data again from the Google Form sheet to where the big overall database is going to be stored (or the original Google Sheets)
+-------------------------------------------------------------------------------------------------------------
+For data cleanup in the main Google Sheets database:
+2. Maybe have a case for if someone hasn't attend more than (threshold of 2 events)
+
+
