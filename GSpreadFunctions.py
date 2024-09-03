@@ -14,6 +14,7 @@ The purpose of this CreateDatabaseSpreadsheet function is create a Google spread
 @GoogleEmail - a Gmail account you have access to and the account the file will be shared with 
 '''
 
+
 def CreateDatabaseSpreadsheet(nameofspreadsheet,ArrayOfDates,gc,GoogleEmail):
   sh = gc.create(nameofspreadsheet)
   time.sleep(2)
@@ -24,8 +25,39 @@ def CreateDatabaseSpreadsheet(nameofspreadsheet,ArrayOfDates,gc,GoogleEmail):
   sh.share(GoogleEmail,perm_type='user',role='writer') 
   print("Done!!!!")
 
+counter = 1
+def add_data_two(inputlist,gc,nameofspreadsheet,tabname):
+  global counter
+  counter +=1
+  sh = gc.open(nameofspreadsheet)
+  currentworksheet = sh.get_worksheet(tabname)
+
+  currentworksheet.update('A1:C1',['FirstName','LastName','EmailAddress'])
+
+  new_range = 'A'+str(counter)+':'+'C'+str(counter)
+  print(counter)
+  print(new_range)
+  currentworksheet.update(new_range,[inputlist[0],inputlist[1],inputlist[2]])
+  print("Done with adding data!!!")
 
 
+
+def add_data(firstname, lastname, email,gc,nameofspreadsheet,tabname):
+  global counter
+  counter +=1
+  sh = gc.open(nameofspreadsheet)
+  currentworksheet = sh.get_worksheet(tabname)
+
+  currentworksheet.update('A1:C1',['FirstName','LastName','EmailAddress'])
+
+  new_range = 'A'+str(counter)+':'+'C'+str(counter)
+  print(counter)
+  print(new_range)
+  currentworksheet.update(new_range,[firstname,lastname,email])
+  print("Done with adding data!!!")
+
+
+'''
 def movedata(LengthOfHolderList,gc,nameofspreadsheet,tabname,targetname):
   sh = gc.open(nameofspreadsheet)
   worksheet = sh.worksheet(tabname)
@@ -39,26 +71,102 @@ def movedata(LengthOfHolderList,gc,nameofspreadsheet,tabname,targetname):
   CellRange = 'A1:'+'D'+str(LengthOfHolderList)
   worksheet.update(HolderList,'A1:D2')
   print("Done!!")
-
+  '''
 
 
 #Once all the volunteers events are run (go in and get the rows where number of events  =1, 2, 3, etc, etc)
-def formatcells(nameofspreadsheet,tabname,gc):
+def formatcellsperuser(nameofspreadsheet,tabname,gc,checkedname):
   sh = gc.open(nameofspreadsheet)
-  worksheet = sh.worksheet(tabname)
-  list_of_lists = worksheet.get_all_values()
-  print(list_of_lists)
-  #counts = Counter(list_of_lists)
-
-
-
-
-
-  '''
-  Where some code to edit the edit the cells will go
-  '''
-
-
-
+  currentworksheet = sh.get_worksheet(tabname)
+  list_of_lists = currentworksheet.get_all_values()
+  element_to_check = checkedname
+  #required_count = 4
+  count = sum(sublist.count(element_to_check) for sublist in list_of_lists)
+  if count == 3:
+    print("GREEN")
+    cell_list = worksheet.findall("Joseph Moffatt")
+    worksheet.format(cell_list, {
+        "backgroundColor": {
+            "red": 0.0,
+            "green":1.0,
+            "blue": 0.0
+        },
+        "fontSize": 12,
+        "bold": True
+    })
+  elif count == 2:
+    print("NO GREEN")
+    cell_list = worksheet.findall("Joseph Moffatt")
+    worksheet.format(cell_list, {
+        "backgroundColor": {
+            "red": 0.0,
+            "green":0.0,
+            "blue": 1.0
+        },
+        "fontSize": 12,
+        "bold": True
+    })
+  elif count == 1:
+    print("RED")
+    cell_list = worksheet.findall("Joseph Moffatt")
+    worksheet.format(cell_list, {
+        "backgroundColor": {
+            "red": 1.0,
+            "green":0.0,
+            "blue": 0.0
+        },
+        "fontSize": 12,
+        "bold": True
+    })
+  else:
+    print("NOPE")
+ 
   print("All done!")
 
+def formatallcells(nameofspreadsheet,tabname,gc):
+  sh = gc.open(nameofspreadsheet)
+  currentworksheet = sh.get_worksheet(tabname)
+  list_of_lists = currentworksheet.get_all_values()
+  #element_to_check = checkedname
+  #required_count = 4
+  count = sum(sublist.count(element_to_check) for sublist in list_of_lists)
+  if count == 3:
+    print("GREEN")
+    cell_list = worksheet.findall("Joseph Moffatt")
+    worksheet.format(cell_list, {
+        "backgroundColor": {
+            "red": 0.0,
+            "green":1.0,
+            "blue": 0.0
+        },
+        "fontSize": 12,
+        "bold": True
+    })
+  elif count == 2:
+    print("NO GREEN")
+    cell_list = worksheet.findall("Joseph Moffatt")
+    worksheet.format(cell_list, {
+        "backgroundColor": {
+            "red": 0.0,
+            "green":0.0,
+            "blue": 1.0
+        },
+        "fontSize": 12,
+        "bold": True
+    })
+  elif count == 1:
+    print("RED")
+    cell_list = worksheet.findall("Joseph Moffatt")
+    worksheet.format(cell_list, {
+        "backgroundColor": {
+            "red": 1.0,
+            "green":0.0,
+            "blue": 0.0
+        },
+        "fontSize": 12,
+        "bold": True
+    })
+  else:
+    print("Not enough information")
+ 
+  print("All done!")
