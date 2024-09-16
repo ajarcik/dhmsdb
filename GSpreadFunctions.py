@@ -1,6 +1,9 @@
 import gspread
 import re
 import time
+import pandas as pd
+import pandasql as ps
+import numpy as np
 #from collection import Counter
 
 #gc = gspread.oauth(credentials_filename='token.json')
@@ -150,3 +153,60 @@ def switch(nameofspreadsheet,tabname,gc):
     #print(list_of_lists[row-1])
     currentworksheet.update_cell((row),(column),'1919')
     print("Done!!!")
+
+def get_info(name, email, gc, nameofspreadsheet, tabname):
+  sh = gc.open(nameofspreadsheet)
+  worksheet = sh.worksheet(tabname)
+  df = pd.DataFrame(worksheet.get_all_records())
+  query = f"""SELECT * FROM df WHERE name='{name}' and email='{email}'"""
+  return ps.sqldf(query, locals())
+
+def get_check_in_dict(gc, tabname):
+  sh = gc.open("DHMS 2024-25")
+  worksheet = sh.worksheet(tabname)
+  df = pd.DataFrame(worksheet.get_all_records())
+  check_in_dict = {}
+  for name in df["name"]:
+    query = f"""SELECT name, checked_in FROM df WHERE name='{name}'"""
+    vol = ps.sqldf(query, locals())
+    check_in_dict[vol.at[0,"name"]] = vol.at[0,"checked_in"]
+  return check_in_dict
+
+def get_check_in_status(gc, tabename):
+  sh = gc.open("DHMS 2024-25")
+  teachers = sh.worksheet("Teachers")
+  worksheet_vol = sh.worksheet(tabename)
+
+  df_teach = pd.DataFrame(teachers.get_all_records())
+  df_vol = pd.DataFrame(worksheet_vol.get_all_records())
+
+  query = """SELECT df_teach.name, df_teach.room, df_teach.team, count(df_vol.name) as vols_assigned, sum(checked_in) as vols_checked_in FROM df_teach INNER JOIN df_vol on df_teach.name = df_vol.teacher GROUP BY df_teach.name"""
+
+  df = ps.sqldf(query, locals())
+
+  volunteer_list = []
+  vol_length = []
+
+  for i in range(len(df)):
+    q = f"""SELECT teacher, name FROM df_vol WHERE teacher='{df.iloc[i]["name"]}'"""
+
+    vols = ps.sqldf(q, locals())
+
+    vol_length.append(len(vols))
+
+    volunteer_list.append(vols)
+
+  for i in range(1, max(vol_length) + 1):
+    a = np.empty((len(df),), dtype=object)
+    a[:] = "n/a"
+    df[f"vol_{i}"] = a
+
+  df.set_index(df['name'], inplace=True)
+  df.drop(['name'], axis=1, inplace=True)
+
+  for vol_set in volunteer_list:
+    teach_name = vol_set.iloc[0]["teacher"]
+    for i in range(1, len(vol_set) + 1):
+      df.at[teach_name, f"vol_{i}"] = vol_set.iloc[i - 1]["name"]
+
+  return df
