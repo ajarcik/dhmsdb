@@ -97,6 +97,10 @@ def app() -> None:
                 display: none;
             }
 
+        #GithubIcon {
+                visibility: hidden;
+            }
+
         div[data-testid="InputInstructions"] > span:nth-child(1) {
                 visibility: hidden;
             }
