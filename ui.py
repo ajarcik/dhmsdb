@@ -6,8 +6,7 @@ import pandasql as ps
 import datetime
 from streamlit_free_text_select import st_free_text_select
 from itertools import chain
-
-gc = gspread.service_account(filename= 'service_account.json')
+import toml
 
 def refresh_clicked():
     st.session_state.refresh = True
@@ -128,6 +127,12 @@ def app() -> None:
     """,
         unsafe_allow_html=True,
     )
+
+    credentials_dict = toml.load(".streamlit/secrets.toml")
+
+    credentials_dict = dict((k.lower(), v) for k,v in credentials_dict.items())
+
+    gc = gspread.service_account_from_dict(credentials_dict)
 
     if st.session_state.initial_setup:
         sh = gc.open("DHMS 2024-25")
