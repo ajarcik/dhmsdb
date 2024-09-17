@@ -1,0 +1,10 @@
+name: build ui.py
+on: [push]
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: start bot
+              env:
+                TOKEN: ${{ secrets.SECRET }}
