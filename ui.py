@@ -97,7 +97,7 @@ def app() -> None:
                 display: none;
             }
 
-        #GithubIcon {
+        #MainMenu {
                 visibility: hidden;
             }
 
