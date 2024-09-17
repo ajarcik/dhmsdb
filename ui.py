@@ -13,7 +13,7 @@ def refresh_clicked():
 
 def check_in_clicked():
     st.session_state.check_in = True
-    st.session_state.series_info = get_info(st.session_state.name, st.session_state.email, gc, "DHMS 2024-25", "2/23/2024 - Volunteers")
+    st.session_state.series_info = get_info(st.session_state.name, st.session_state.email, st.session_state.gc, "DHMS 2024-25", "2/23/2024 - Volunteers")
 
 def login_clicked():
     login_creds = pd.read_csv("users.csv")
@@ -128,14 +128,13 @@ def app() -> None:
         unsafe_allow_html=True,
     )
 
-    credentials_dict = toml.load(".streamlit/secrets.toml")
-
-    credentials_dict = dict((k.lower(), v) for k,v in credentials_dict.items())
-
-    gc = gspread.service_account_from_dict(credentials_dict)
+    if "gc" not in st.session_state:
+        credentials_dict = toml.load(".streamlit/secrets.toml")
+        credentials_dict = dict((k.lower(), v) for k,v in credentials_dict.items())
+        st.session_state.gc = gspread.service_account_from_dict(credentials_dict)
 
     if st.session_state.initial_setup:
-        sh = gc.open("DHMS 2024-25")
+        sh = st.session_state.gc.open("DHMS 2024-25")
         worksheet = sh.worksheet("2/23/2024 - Volunteers")
         df = pd.DataFrame(worksheet.get_all_records())
 
@@ -143,8 +142,8 @@ def app() -> None:
         st.session_state.emails = ps.sqldf("""SELECT email FROM df""", locals())
         st.session_state.teachers = ps.sqldf("""SELECT DISTINCT teacher FROM df""", locals())
 
-        st.session_state.df = get_check_in_status(gc, "2/23/2024 - Volunteers")
-        st.session_state.check_in_dict = get_check_in_dict(gc, "2/23/2024 - Volunteers")
+        st.session_state.df = get_check_in_status(st.session_state.gc, "2/23/2024 - Volunteers")
+        st.session_state.check_in_dict = get_check_in_dict(st.session_state.gc, "2/23/2024 - Volunteers")
 
     with st.sidebar:
         st.button(
@@ -198,8 +197,8 @@ def app() -> None:
         with col3:
 
             if st.session_state.refresh:
-                st.session_state.df = get_check_in_status(gc, "2/23/2024 - Volunteers")
-                st.session_state.check_in_dict = get_check_in_dict(gc, "2/23/2024 - Volunteers")
+                st.session_state.df = get_check_in_status(st.session_state.gc, "2/23/2024 - Volunteers")
+                st.session_state.check_in_dict = get_check_in_dict(st.session_state.gc, "2/23/2024 - Volunteers")
 
                 st.session_state.refresh = False
 
