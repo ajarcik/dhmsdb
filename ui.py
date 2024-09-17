@@ -285,7 +285,7 @@ def app() -> None:
                 with col1:
                     st.button("Admin Login", on_click=admin_clicked, use_container_width=True)
 
-                with st.container(height=340):
+                with st.container(height=360):
 
                     st.success("Welcome, you are checked in! See information below and take a screenshot to refer back to.")
 
@@ -314,12 +314,12 @@ def app() -> None:
                     unsafe_allow_html=True,
                 )
 
-                _, col1 = st.columns([1,.23])
+                _, col1 = st.columns([1,.28])
 
                 with col1:
                     st.button("Admin Login", on_click=admin_clicked, use_container_width=True)
 
-                with st.container(height=400):
+                with st.container(height=380):
                     # Title
 
                     st.markdown(
