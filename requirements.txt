@@ -8,7 +8,7 @@ googleapis-common-protos==1.65.0
 gspread==6.1.2
 pandas==2.2.2
 pandasql==0.7.3
-streamlit==1.36.0
+streamlit==1.37.0
 streamlit-camera-input-live==0.2.0
 streamlit-card==1.0.2
 streamlit-embedcode==0.1.2
