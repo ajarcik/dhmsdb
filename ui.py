@@ -107,6 +107,14 @@ def app() -> None:
                 display: none;
             }
 
+        .st-emotion-cache-zooupb {
+                display: none;
+            }
+
+        .st-emotion-cache-20q1e1 {
+                display: none;
+            }
+
         div[data-testid="InputInstructions"] > span:nth-child(1) {
                 visibility: hidden;
             }
