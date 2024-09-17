@@ -285,7 +285,7 @@ def app() -> None:
                 with col1:
                     st.button("Admin Login", on_click=admin_clicked, use_container_width=True)
 
-                with st.container(height=360):
+                with st.container(height=370):
 
                     st.success("Welcome, you are checked in! See information below and take a screenshot to refer back to.")
 
