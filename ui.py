@@ -115,6 +115,10 @@ def app() -> None:
                 display: none;
             }
 
+        .st-emotion-cache-1wbqy5l {
+                display: none;
+            }
+
         div[data-testid="InputInstructions"] > span:nth-child(1) {
                 visibility: hidden;
             }
