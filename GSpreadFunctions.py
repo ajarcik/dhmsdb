@@ -47,7 +47,7 @@ def add_data_two(inputlist,gc,nameofspreadsheet,tabname):
 
 
 
-def add_data(firstname, lastname, email,gc,nameofspreadsheet,tabname):
+def add_data(firstname, lastname, email, gc,nameofspreadsheet,tabname):
   global counter
   counter +=1
   sh = gc.open(nameofspreadsheet)
@@ -154,15 +154,19 @@ def switch(nameofspreadsheet,tabname,gc):
     currentworksheet.update_cell((row),(column),'1919')
     print("Done!!!")
 
-def get_info(name, email, gc, nameofspreadsheet, tabname):
-  sh = gc.open(nameofspreadsheet)
+
+
+
+
+def get_info(gc, dbname, tabname, name, email):
+  sh = gc.open(dbname)
   worksheet = sh.worksheet(tabname)
   df = pd.DataFrame(worksheet.get_all_records())
   query = f"""SELECT * FROM df WHERE name='{name}' and email='{email}'"""
   return ps.sqldf(query, locals())
 
-def get_check_in_dict(gc, tabname):
-  sh = gc.open("DHMS 2024-25")
+def get_check_in_dict(gc, dbname, tabname):
+  sh = gc.open(dbname)
   worksheet = sh.worksheet(tabname)
   df = pd.DataFrame(worksheet.get_all_records())
   check_in_dict = {}
@@ -172,10 +176,10 @@ def get_check_in_dict(gc, tabname):
     check_in_dict[vol.at[0,"name"]] = vol.at[0,"checked_in"]
   return check_in_dict
 
-def get_check_in_status(gc, tabename):
-  sh = gc.open("DHMS 2024-25")
+def get_check_in_status(gc, dbname, tabname):
+  sh = gc.open(dbname)
   teachers = sh.worksheet("Teachers")
-  worksheet_vol = sh.worksheet(tabename)
+  worksheet_vol = sh.worksheet(tabname)
 
   df_teach = pd.DataFrame(teachers.get_all_records())
   df_vol = pd.DataFrame(worksheet_vol.get_all_records())
@@ -198,7 +202,7 @@ def get_check_in_status(gc, tabename):
 
   for i in range(1, max(vol_length) + 1):
     a = np.empty((len(df),), dtype=object)
-    a[:] = "n/a"
+    a[:] = " "
     df[f"vol_{i}"] = a
 
   df.set_index(df['name'], inplace=True)
@@ -210,3 +214,40 @@ def get_check_in_status(gc, tabename):
       df.at[teach_name, f"vol_{i}"] = vol_set.iloc[i - 1]["name"]
 
   return df
+
+def check_name_email_pair(gc, dbname, tabname, name, email):
+   
+  sh = gc.open(dbname)
+  worksheet_vol = sh.worksheet(tabname)
+
+  df_vol = pd.DataFrame(worksheet_vol.get_all_records())
+
+  if len(df_vol.loc[(df_vol["name"] == name) & (df_vol["email"] == email)]) == 0:
+     return True
+  else:
+     return False
+  
+def mark_checked_in(gc, dbname, tabname, name, email):
+   
+  sh = gc.open(dbname)
+  worksheet_vol = sh.worksheet(tabname)
+
+  email_cell = worksheet_vol.find(email)
+
+  worksheet_vol.update_cell(email_cell.row, email_cell.col + 3, 1)
+
+  return None
+
+def reassign_vol(gc, dbname, tabname, name, new_teach):
+   
+  sh = gc.open(dbname)
+  worksheet_vol = sh.worksheet(tabname)
+  teachers = sh.worksheet("Teachers")
+
+  name_cell = worksheet_vol.find(name)
+  teach_cell = teachers.find(new_teach)
+
+  worksheet_vol.update_cell(name_cell.row, name_cell.col + 2, new_teach)
+  worksheet_vol.update_cell(name_cell.row, name_cell.col + 3, teachers.cell(teach_cell.row, teach_cell.col + 2).value)
+
+  return None

@@ -1,5 +1,5 @@
 import streamlit as st
-from GSpreadFunctions import get_info, get_check_in_status, get_check_in_dict
+from GSpreadFunctions import get_info, get_check_in_status, get_check_in_dict, check_name_email_pair, mark_checked_in, reassign_vol
 import gspread
 import pandas as pd
 import pandasql as ps
@@ -8,12 +8,20 @@ from streamlit_free_text_select import st_free_text_select
 from itertools import chain
 import toml
 
+# Change the below configurations depending on the date of the event
+current_year_db = "DHMS 2024-25"
+current_event_sheet_vol = "9/20/2024 - Volunteers"
+current_event_sheet_feed = "9/20/2024 - Feedback"
+
+
 def refresh_clicked():
     st.session_state.refresh = True
 
 def check_in_clicked():
     st.session_state.check_in = True
-    st.session_state.series_info = get_info(st.session_state.name, st.session_state.email, st.session_state.gc, "DHMS 2024-25", "2/23/2024 - Volunteers")
+    st.session_state.incorrect = check_name_email_pair(st.session_state.gc, current_year_db, current_event_sheet_vol, st.session_state.name, st.session_state.email)
+    if not st.session_state.incorrect:
+        mark_checked_in(st.session_state.gc, current_year_db, current_event_sheet_vol, st.session_state.name, st.session_state.email)
 
 def login_clicked():
     login_creds = pd.read_csv("users.csv")
@@ -39,7 +47,7 @@ def close_side():
     st.session_state.sidebar = "collapsed"
 
 def color_checked_in(name):
-    if name == 'n/a':
+    if name == ' ':
         color = '#f0f0f5'
     else:
         checked_in = st.session_state.check_in_dict[name]
@@ -55,6 +63,10 @@ def reassign_name_clicked():
 
 def reassign_teahcer_clicked():
     st.session_state.refresh=False
+
+def reassign_clicked():
+    st.session_state.refresh=True
+    reassign_vol(st.session_state.gc, current_year_db, current_event_sheet_vol, st.session_state.reassign_name, st.session_state.reassign_teacher)
 
 def app() -> None:
 
@@ -78,6 +90,8 @@ def app() -> None:
         st.session_state.reassign_name = None
     if "reassign_teacher" not in st.session_state:
         st.session_state.reassign_teacher = None
+    if "incorrect" not in st.session_state:
+        st.session_state.incorrect = False
     
     
     # Page configuration
@@ -156,16 +170,16 @@ def app() -> None:
         st.session_state.gc = gspread.service_account_from_dict(credentials_dict)
 
     if st.session_state.initial_setup:
-        sh = st.session_state.gc.open("DHMS 2024-25")
-        worksheet = sh.worksheet("2/23/2024 - Volunteers")
+        sh = st.session_state.gc.open(current_year_db)
+        worksheet = sh.worksheet(current_event_sheet_vol)
         df = pd.DataFrame(worksheet.get_all_records())
 
         st.session_state.names = ps.sqldf("""SELECT name FROM df""", locals())
         st.session_state.emails = ps.sqldf("""SELECT email FROM df""", locals())
         st.session_state.teachers = ps.sqldf("""SELECT DISTINCT teacher FROM df""", locals())
 
-        st.session_state.df = get_check_in_status(st.session_state.gc, "2/23/2024 - Volunteers")
-        st.session_state.check_in_dict = get_check_in_dict(st.session_state.gc, "2/23/2024 - Volunteers")
+        st.session_state.df = get_check_in_status(st.session_state.gc, current_year_db, current_event_sheet_vol)
+        st.session_state.check_in_dict = get_check_in_dict(st.session_state.gc, current_year_db, current_event_sheet_vol)
 
     with st.sidebar:
         st.button(
@@ -184,14 +198,14 @@ def app() -> None:
             st.warning("Incorrect username or password, please try again.")
 
             st.session_state.username = st.text_input("Username:")
-            st.session_state.password = st.text_input("Password:")
+            st.session_state.password = st.text_input("Password:", type='password')
 
             st.button("Login", on_click=login_clicked, use_container_width=True, key=1)
 
         else:
 
             st.session_state.username = st.text_input("Username:", key=st.session_state.username_key)
-            st.session_state.password = st.text_input("Password:", key=st.session_state.password_key)
+            st.session_state.password = st.text_input("Password:", key=st.session_state.password_key, type='password')
 
             st.button("Login", on_click=login_clicked, use_container_width=True, key=1)
 
@@ -219,8 +233,8 @@ def app() -> None:
         with col3:
 
             if st.session_state.refresh:
-                st.session_state.df = get_check_in_status(st.session_state.gc, "2/23/2024 - Volunteers")
-                st.session_state.check_in_dict = get_check_in_dict(st.session_state.gc, "2/23/2024 - Volunteers")
+                st.session_state.df = get_check_in_status(st.session_state.gc, current_year_db, current_event_sheet_vol)
+                st.session_state.check_in_dict = get_check_in_dict(st.session_state.gc, current_year_db, current_event_sheet_vol)
 
                 st.session_state.refresh = False
 
@@ -228,14 +242,14 @@ def app() -> None:
 
             with tab1:
             
-                with st.container(height=((len(st.session_state.df) + 1) * 35 + 3) + 475):
+                with st.container(height=((len(st.session_state.df) + 1) * 35 + 3) + 375):
 
-                    st.markdown(
-                        "<h5 style='color: black;'>Select the date of the event:</h5>",
-                        unsafe_allow_html=True,
-                    )
+                    # st.markdown(
+                    #     "<h5 style='color: black;'>Select the date of the event:</h5>",
+                    #     unsafe_allow_html=True,
+                    # )
 
-                    st.session_state.date_of_event = st.date_input("What is the date of the event?", None, label_visibility="collapsed")
+                    # st.session_state.date_of_event = st.date_input("What is the date of the event?", None, label_visibility="collapsed")
 
                     col5, col2 = st.columns([1,.2])
                     with col5:
@@ -246,7 +260,12 @@ def app() -> None:
                     with col2:
                         st.button("Refresh", on_click=refresh_clicked, use_container_width=True)
 
-                    st.dataframe(st.session_state.df.style.map(color_checked_in, subset=['vol_1', 'vol_2', 'vol_3']), height = (len(st.session_state.df) + 1) * 35 + 3,use_container_width=True)
+                    max_num_vols = max(st.session_state.df["vols_assigned"])
+                    vol_subset = []
+                    for i in range(1, max_num_vols + 1):
+                        vol_subset.append(f"vol_{i}")
+
+                    st.dataframe(st.session_state.df.style.map(color_checked_in, subset=vol_subset), height = (len(st.session_state.df) + 1) * 35 + 3,use_container_width=True)
 
                     st.markdown(
                         "<h5 style='color: black;'>Re-assign Volunteer:</h5>",
@@ -255,9 +274,14 @@ def app() -> None:
 
                     st.session_state.reassign_name = st_free_text_select(label="Name:", options=list(st.session_state.names["name"]), index=None, format_func=lambda x: x.title(), placeholder=' ', disabled=False, delay=300, label_visibility="visible")
 
+                    # if st.session_state.reassign_name != None:
+                    #     # Get historical data
+                    #     st.write("Historical data will appear here")
+
+
                     st.session_state.reassign_teacher = st_free_text_select(label="New Teacher Assignment:", options=list(st.session_state.teachers["teacher"]), index=None, format_func=lambda x: x.title(), placeholder=' ', disabled=False, delay=300, label_visibility="visible")
 
-                    st.button("Confirm Re-assign", use_container_width=True, disabled=((st.session_state.reassign_name == None) or (st.session_state.reassign_teacher == None)))
+                    st.button("Confirm Re-assign", on_click=reassign_clicked, use_container_width=True, disabled=((st.session_state.reassign_name == None) or (st.session_state.reassign_teacher == None)))
 
             with tab2:
                 with st.container(height=670):
@@ -289,8 +313,10 @@ def app() -> None:
 
         with col4:
 
-            if st.session_state.check_in:
+            if st.session_state.check_in and not st.session_state.incorrect:
 
+                st.session_state.series_info = get_info(st.session_state.gc, current_year_db, current_event_sheet_vol, st.session_state.name, st.session_state.email)
+            
                 st.markdown(
                     "<h1 style='text-align: center; color: black;'>Druid Hills Middle School Volunteer Check-In</h1>",
                     unsafe_allow_html=True,
@@ -341,19 +367,28 @@ def app() -> None:
                 with col1:
                     st.button("Admin Login", on_click=admin_clicked, use_container_width=True)
 
-                with st.container(height=380):
-                    # Title
+                if st.session_state.incorrect:
+                    display_cont = st.container(height=350)
+                else:
+                    display_cont = st.container(height=300)
 
-                    st.markdown(
-                        "<h5 style='color: black;'>Your Information:</h5>",
-                        unsafe_allow_html=True,
-                    )
+                with display_cont:
 
-                    st.session_state.name = st_free_text_select(label="Name:", options=list(st.session_state.names["name"]), index=None, format_func=lambda x: x.title(), placeholder=' ', disabled=False, delay=300, label_visibility="visible")
+                    if st.session_state.incorrect:
+                        st.error("Your email and name do not match with our records. Please re-enter your information.")
 
-                    st.session_state.email = st_free_text_select(label="Email:", options=list(st.session_state.emails["email"]), index=None, format_func=lambda x: x.lower(), placeholder=' ', disabled=False, delay=300, label_visibility="visible")
+                    st.markdown("**Name:**")
 
-                    st.session_state.phone_num = st.text_input(label="Phone Number:")
+                    st.session_state.name = st_free_text_select(label="Name:", options=list(st.session_state.names["name"]), index=None, format_func=lambda x: x.title(), placeholder=' ', disabled=False, delay=300, label_visibility="collapsed")
+
+                    st.markdown("**Email:**")
+
+                    st.session_state.email = st_free_text_select(label="Email:", options=list(st.session_state.emails["email"]), index=None, format_func=lambda x: x.lower(), placeholder=' ', disabled=False, delay=300, label_visibility="collapsed")
+
+                    # Uncomment once the phone update thing is ready
+                    # st.markdown("**Phone Number:**")
+
+                    # st.session_state.phone_num = st.text_input(label="Phone Number:", label_visibility="collapsed")
 
                     st.button("Check-In", on_click=check_in_clicked, use_container_width=True)
 
