@@ -313,17 +313,16 @@ def app() -> None:
                     # st.button("Confirm Volunteer", on_click=reassign_clicked, use_container_width=True, disabled=((st.session_state.reassign_name == None) or (st.session_state.reassign_teacher == None)))
 
             with tab2:
-                st.write("This is not functional yet")
-                with st.container(height=670):
-                    st.markdown(
-                        "<h5 style='color: black;'>Create New Event:</h5>",
-                        unsafe_allow_html=True,
-                    )
-                    st.session_state.date_of_new_event = st.date_input("What is the date of the new event?", None)
+                st.error("This is not functional yet")
+                st.markdown(
+                    "<h5 style='color: black;'>Create New Event:</h5>",
+                    unsafe_allow_html=True,
+                )
+                st.session_state.date_of_new_event = st.date_input("What is the date of the new event?", None)
 
-                    st.session_state.volunteer_assignments = st.file_uploader("Upload your volunteer assignments below", type=['xlsx', 'csv'], help="Upload a csv or xlsx file with the names, emails, and teacher assignment for each volunteer.")
+                st.session_state.volunteer_assignments = st.file_uploader("Upload your volunteer assignments below", type=['xlsx', 'csv'], help="Upload a csv or xlsx file with the names, emails, and teacher assignment for each volunteer.")
 
-                    st.button("Confirm New Event", use_container_width=True)
+                st.button("Confirm New Event", use_container_width=True)
 
     else:
 
