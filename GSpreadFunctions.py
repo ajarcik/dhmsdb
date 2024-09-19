@@ -156,19 +156,15 @@ def switch(nameofspreadsheet,tabname,gc):
     print("Done!!!")
 
 
-def get_info(gc, dbname, tabname, name, email):
-  sh = gc.open(dbname)
-  worksheet = sh.worksheet(tabname)
-  df = pd.DataFrame(worksheet.get_all_records())
+def get_info(df, name, email):
+  df = df.copy(deep=True)
   name = name.translate(str.maketrans('', '', string.punctuation))
   df["name"] = df["name"].apply(lambda x : x.translate(str.maketrans('', '', string.punctuation)))
   query = f"""SELECT * FROM df WHERE name='{name}' and email='{email}'"""
   return ps.sqldf(query, locals())
 
-def get_check_in_dict(gc, dbname, tabname):
-  sh = gc.open(dbname)
-  worksheet = sh.worksheet(tabname)
-  df = pd.DataFrame(worksheet.get_all_records())
+def get_check_in_dict(df):
+  df = df.copy(deep=True)
   df["name"] = df["name"].apply(lambda x : x.translate(str.maketrans('', '', string.punctuation)))
   check_in_dict = {}
   for name in df["name"]:
@@ -177,13 +173,8 @@ def get_check_in_dict(gc, dbname, tabname):
     check_in_dict[vol.at[0,"name"]] = vol.at[0,"checked_in"]
   return check_in_dict
 
-def get_check_in_status(gc, dbname, tabname):
-  sh = gc.open(dbname)
-  teachers = sh.worksheet("Teachers")
-  worksheet_vol = sh.worksheet(tabname)
-
-  df_teach = pd.DataFrame(teachers.get_all_records())
-  df_vol = pd.DataFrame(worksheet_vol.get_all_records())
+def get_check_in_status(df_vol, df_teach):
+  df_vol = df_vol.copy(deep=True)
   df_vol["name"] = df_vol["name"].apply(lambda x : x.translate(str.maketrans('', '', string.punctuation)))
 
   query = """SELECT df_teach.name, df_teach.room, count(df_vol.name) as vols_assigned, sum(checked_in) as vols_checked_in FROM df_teach INNER JOIN df_vol on df_teach.name = df_vol.teacher GROUP BY df_teach.name"""
@@ -217,39 +208,28 @@ def get_check_in_status(gc, dbname, tabname):
 
   return df
 
-def check_name_email_pair(gc, dbname, tabname, name, email):
-   
-  sh = gc.open(dbname)
-  worksheet_vol = sh.worksheet(tabname)
-
-  df_vol = pd.DataFrame(worksheet_vol.get_all_records())
-
+def check_name_email_pair(df_vol, name, email):
+  # print(name)
+  # print(df_vol)
   if len(df_vol.loc[(df_vol["name"] == name) & (df_vol["email"] == email)]) == 0:
      return True
   else:
      return False
   
-def mark_checked_in(gc, dbname, tabname, name, email):
-   
-  sh = gc.open(dbname)
-  worksheet_vol = sh.worksheet(tabname)
+def mark_checked_in(ws, name, email):
 
-  email_cell = worksheet_vol.find(email)
+  email_cell = ws.find(email)
 
-  worksheet_vol.update_cell(email_cell.row, email_cell.col + 3, 1)
+  ws.update_cell(email_cell.row, email_cell.col + 3, 1)
 
   return None
 
-def reassign_vol(gc, dbname, tabname, name, new_teach):
-   
-  sh = gc.open(dbname)
-  worksheet_vol = sh.worksheet(tabname)
-  teachers = sh.worksheet("Teachers")
+def reassign_vol(vol_ws, teach_ws, name, new_teach):
 
-  name_cell = worksheet_vol.find(name)
-  teach_cell = teachers.find(new_teach)
+  name_cell = vol_ws.find(name)
+  teach_cell = teach_ws.find(new_teach)
 
-  worksheet_vol.update_cell(name_cell.row, name_cell.col + 2, new_teach)
-  worksheet_vol.update_cell(name_cell.row, name_cell.col + 3, teachers.cell(teach_cell.row, teach_cell.col + 1).value)
+  vol_ws.update_cell(name_cell.row, name_cell.col + 2, new_teach)
+  vol_ws.update_cell(name_cell.row, name_cell.col + 3, teach_ws.cell(teach_cell.row, teach_cell.col + 1).value)
 
   return None

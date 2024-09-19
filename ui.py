@@ -16,13 +16,13 @@ date_col = "sep_20"
 
 
 def refresh_clicked():
-    st.session_state.refresh = True
+    st.session_state.initial_setup = True
 
 def check_in_clicked():
     st.session_state.check_in = True
-    st.session_state.incorrect = check_name_email_pair(st.session_state.gc, current_year_db, current_event_sheet_vol, st.session_state.name, st.session_state.email)
+    st.session_state.incorrect = check_name_email_pair(st.session_state.df_vol, st.session_state.name, st.session_state.email)
     if not st.session_state.incorrect:
-        mark_checked_in(st.session_state.gc, current_year_db, current_event_sheet_vol, st.session_state.name, st.session_state.email)
+        mark_checked_in(st.session_state.vol_ws, st.session_state.name, st.session_state.email)
 
 def login_clicked():
     login_creds = pd.read_csv("users.csv")
@@ -36,6 +36,8 @@ def login_clicked():
 
     st.session_state.username_key = f"user_{st.session_state.i}"
     st.session_state.password_key = f"pass_{st.session_state.i}"
+
+    st.session_state.initial_setup = True
 
 def admin_clicked():
     if st.session_state.sidebar != "expanded":
@@ -66,8 +68,8 @@ def reassign_teahcer_clicked():
     st.session_state.refresh=False
 
 def reassign_clicked():
-    st.session_state.refresh=True
-    reassign_vol(st.session_state.gc, current_year_db, current_event_sheet_vol, st.session_state.reassign_name, st.session_state.reassign_teacher)
+    st.session_state.initial_setup = True
+    reassign_vol(st.session_state.vol_ws, st.session_state.teacher_ws, st.session_state.reassign_name, st.session_state.reassign_teacher)
 
 def app() -> None:
 
@@ -165,26 +167,26 @@ def app() -> None:
         unsafe_allow_html=True,
     )
 
-    if "gc" not in st.session_state:
+    if st.session_state.initial_setup:
         credentials_dict = toml.load(".streamlit/secrets.toml")
         credentials_dict = dict((k.lower(), v) for k,v in credentials_dict.items())
-        st.session_state.gc = gspread.service_account_from_dict(credentials_dict)
+        gc = gspread.service_account_from_dict(credentials_dict)
+        sh = gc.open(current_year_db)
+        st.session_state.teacher_ws = sh.worksheet("Teachers")
+        st.session_state.vol_ws = sh.worksheet(current_event_sheet_vol)
 
-    if st.session_state.initial_setup:
-        sh = st.session_state.gc.open(current_year_db)
-        worksheet = sh.worksheet(current_event_sheet_vol)
-        teachers = sh.worksheet("Teachers")
-        df = pd.DataFrame(worksheet.get_all_records())
-        df_teach = pd.DataFrame(teachers.get_all_records())
+        st.session_state.df_vol = pd.DataFrame(st.session_state.vol_ws.get_all_records())
+        st.session_state.df_teach = pd.DataFrame(st.session_state.teacher_ws.get_all_records())
 
-        print(df_teach)
+        df_vol = st.session_state.df_vol
+        df_teach = st.session_state.df_teach
 
-        st.session_state.names = ps.sqldf("""SELECT name FROM df""", locals())
-        st.session_state.emails = ps.sqldf("""SELECT email FROM df""", locals())
+        st.session_state.names = ps.sqldf("""SELECT name FROM df_vol""", locals())
+        st.session_state.emails = ps.sqldf("""SELECT email FROM df_vol""", locals())
         st.session_state.teachers = ps.sqldf(f"""SELECT DISTINCT name FROM df_teach WHERE {date_col} = 1""", locals())
 
-        st.session_state.df = get_check_in_status(st.session_state.gc, current_year_db, current_event_sheet_vol)
-        st.session_state.check_in_dict = get_check_in_dict(st.session_state.gc, current_year_db, current_event_sheet_vol)
+        st.session_state.df = get_check_in_status(st.session_state.df_vol, st.session_state.df_teach)
+        st.session_state.check_in_dict = get_check_in_dict(st.session_state.df_vol)
 
     with st.sidebar:
         st.button(
@@ -237,11 +239,11 @@ def app() -> None:
 
         with col3:
 
-            if st.session_state.refresh:
-                st.session_state.df = get_check_in_status(st.session_state.gc, current_year_db, current_event_sheet_vol)
-                st.session_state.check_in_dict = get_check_in_dict(st.session_state.gc, current_year_db, current_event_sheet_vol)
+            # if st.session_state.refresh:
+            #     st.session_state.df = get_check_in_status(st.session_state.df_vol, st.session_state.df_teach)
+            #     st.session_state.check_in_dict = get_check_in_dict(st.session_state.df_vol)
 
-                st.session_state.refresh = False
+            #     st.session_state.refresh = False
 
             tab1, tab2 = st.tabs(["Event Dashboard", "Create New Event"])
 
@@ -320,7 +322,7 @@ def app() -> None:
 
             if st.session_state.check_in and not st.session_state.incorrect:
 
-                st.session_state.series_info = get_info(st.session_state.gc, current_year_db, current_event_sheet_vol, st.session_state.name, st.session_state.email)
+                st.session_state.series_info = get_info(st.session_state.df_vol, st.session_state.name, st.session_state.email)
             
                 st.markdown(
                     "<h1 style='text-align: center; color: black;'>Druid Hills Middle School Volunteer Check-In</h1>",
