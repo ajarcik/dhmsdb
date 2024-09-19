@@ -249,30 +249,34 @@ def app() -> None:
 
             with tab1:
             
-                with st.container(height=((len(st.session_state.df) + 1) * 35 + 3) + 375):
+                # with st.container(height=((len(st.session_state.df) + 1) * 35 + 3) + 375):
 
-                    # st.markdown(
-                    #     "<h5 style='color: black;'>Select the date of the event:</h5>",
-                    #     unsafe_allow_html=True,
-                    # )
+                # st.markdown(
+                #     "<h5 style='color: black;'>Select the date of the event:</h5>",
+                #     unsafe_allow_html=True,
+                # )
 
-                    # st.session_state.date_of_event = st.date_input("What is the date of the event?", None, label_visibility="collapsed")
+                # st.session_state.date_of_event = st.date_input("What is the date of the event?", None, label_visibility="collapsed")
 
-                    col5, col2 = st.columns([1,.2])
-                    with col5:
-                        st.markdown(
-                        "<h5 style='color: black;'>Check-in Status:</h5>",
-                        unsafe_allow_html=True,
-                    )
-                    with col2:
-                        st.button("Refresh", on_click=refresh_clicked, use_container_width=True)
+                col5, col2 = st.columns([1,.2])
+                with col5:
+                    st.markdown(
+                    "<h5 style='color: black;'>Check-in Status:</h5>",
+                    unsafe_allow_html=True,
+                )
+                with col2:
+                    st.button("Refresh", on_click=refresh_clicked, use_container_width=True)
 
-                    max_num_vols = max(st.session_state.df["vols_assigned"])
-                    vol_subset = []
-                    for i in range(1, max_num_vols + 1):
-                        vol_subset.append(f"vol_{i}")
+                max_num_vols = max(st.session_state.df["vols_assigned"])
+                vol_subset = []
+                for i in range(1, max_num_vols + 1):
+                    vol_subset.append(f"vol_{i}")
 
-                    st.dataframe(st.session_state.df.style.map(color_checked_in, subset=vol_subset), height = (len(st.session_state.df) + 1) * 35 + 3,use_container_width=True)
+                st.dataframe(st.session_state.df.style.map(color_checked_in, subset=vol_subset), height = (len(st.session_state.df) + 1) * 35 + 3,use_container_width=True)
+
+                col20, col21 = st.columns([1,1])
+
+                with col20:
 
                     st.markdown(
                         "<h5 style='color: black;'>Re-assign Volunteer:</h5>",
@@ -289,6 +293,24 @@ def app() -> None:
                     st.session_state.reassign_teacher = st_free_text_select(label="New Teacher Assignment:", options=list(st.session_state.teachers["name"]), index=None, format_func=lambda x: x.title(), placeholder=' ', disabled=False, delay=300, label_visibility="visible")
 
                     st.button("Confirm Re-assign", on_click=reassign_clicked, use_container_width=True, disabled=((st.session_state.reassign_name == None) or (st.session_state.reassign_teacher == None)))
+
+                with col21:
+
+                    st.markdown(
+                        "<h5 style='color: black;'>Add Volunteer:</h5>",
+                        unsafe_allow_html=True,
+                    )
+
+                    # st.session_state.new_vol = st_free_text_select(label="new vol name:", options=list(st.session_state.names["name"]), index=None, format_func=lambda x: x.title(), placeholder=' ', disabled=False, delay=300, label_visibility="visible")
+
+                    # # if st.session_state.reassign_name != None:
+                    # #     # Get historical data
+                    # #     st.write("Historical data will appear here")
+
+
+                    # # st.session_state.reassign_teacher = st_free_text_select(label="New Teacher Assignment:", options=list(st.session_state.teachers["name"]), index=None, format_func=lambda x: x.title(), placeholder=' ', disabled=False, delay=300, label_visibility="visible")
+
+                    # st.button("Confirm Volunteer", on_click=reassign_clicked, use_container_width=True, disabled=((st.session_state.reassign_name == None) or (st.session_state.reassign_teacher == None)))
 
             with tab2:
                 with st.container(height=670):
@@ -375,29 +397,22 @@ def app() -> None:
                     st.button("Admin Login", on_click=admin_clicked, use_container_width=True)
 
                 if st.session_state.incorrect:
-                    display_cont = st.container(height=350)
-                else:
-                    display_cont = st.container(height=300)
+                    st.error("Your email and name do not match with our records. Please re-enter your information.")
 
-                with display_cont:
+                st.markdown("**Name:**")
 
-                    if st.session_state.incorrect:
-                        st.error("Your email and name do not match with our records. Please re-enter your information.")
+                st.session_state.name = st_free_text_select(label="Name:", options=list(st.session_state.names["name"]), index=None, format_func=lambda x: x.title(), placeholder=' ', disabled=False, delay=300, label_visibility="collapsed")
+                
+                st.markdown("**Email:**")
 
-                    st.markdown("**Name:**")
+                st.session_state.email = st_free_text_select(label="Email:", options=list(st.session_state.emails["email"]), index=None, format_func=lambda x: x.lower(), placeholder=' ', disabled=False, delay=300, label_visibility="collapsed")
 
-                    st.session_state.name = st_free_text_select(label="Name:", options=list(st.session_state.names["name"]), index=None, format_func=lambda x: x.title(), placeholder=' ', disabled=False, delay=300, label_visibility="collapsed")
+                # Uncomment once the phone update thing is ready
+                # st.markdown("**Phone Number:**")
 
-                    st.markdown("**Email:**")
+                # st.session_state.phone_num = st.text_input(label="Phone Number:", label_visibility="collapsed")
 
-                    st.session_state.email = st_free_text_select(label="Email:", options=list(st.session_state.emails["email"]), index=None, format_func=lambda x: x.lower(), placeholder=' ', disabled=False, delay=300, label_visibility="collapsed")
-
-                    # Uncomment once the phone update thing is ready
-                    # st.markdown("**Phone Number:**")
-
-                    # st.session_state.phone_num = st.text_input(label="Phone Number:", label_visibility="collapsed")
-
-                    st.button("Check-In", on_click=check_in_clicked, use_container_width=True)
+                st.button("Check-In", on_click=check_in_clicked, use_container_width=True)
 
     st.session_state.initial_setup = False
 
