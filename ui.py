@@ -12,6 +12,7 @@ import toml
 current_year_db = "DHMS 2024-25"
 current_event_sheet_vol = "9/20/2024 - Volunteers"
 current_event_sheet_feed = "9/20/2024 - Feedback"
+date_col = "sep_20"
 
 
 def refresh_clicked():
@@ -172,11 +173,15 @@ def app() -> None:
     if st.session_state.initial_setup:
         sh = st.session_state.gc.open(current_year_db)
         worksheet = sh.worksheet(current_event_sheet_vol)
+        teachers = sh.worksheet("Teachers")
         df = pd.DataFrame(worksheet.get_all_records())
+        df_teach = pd.DataFrame(teachers.get_all_records())
+
+        print(df_teach)
 
         st.session_state.names = ps.sqldf("""SELECT name FROM df""", locals())
         st.session_state.emails = ps.sqldf("""SELECT email FROM df""", locals())
-        st.session_state.teachers = ps.sqldf("""SELECT DISTINCT teacher FROM df""", locals())
+        st.session_state.teachers = ps.sqldf(f"""SELECT DISTINCT name FROM df_teach WHERE {date_col} = 1""", locals())
 
         st.session_state.df = get_check_in_status(st.session_state.gc, current_year_db, current_event_sheet_vol)
         st.session_state.check_in_dict = get_check_in_dict(st.session_state.gc, current_year_db, current_event_sheet_vol)
@@ -279,7 +284,7 @@ def app() -> None:
                     #     st.write("Historical data will appear here")
 
 
-                    st.session_state.reassign_teacher = st_free_text_select(label="New Teacher Assignment:", options=list(st.session_state.teachers["teacher"]), index=None, format_func=lambda x: x.title(), placeholder=' ', disabled=False, delay=300, label_visibility="visible")
+                    st.session_state.reassign_teacher = st_free_text_select(label="New Teacher Assignment:", options=list(st.session_state.teachers["name"]), index=None, format_func=lambda x: x.title(), placeholder=' ', disabled=False, delay=300, label_visibility="visible")
 
                     st.button("Confirm Re-assign", on_click=reassign_clicked, use_container_width=True, disabled=((st.session_state.reassign_name == None) or (st.session_state.reassign_teacher == None)))
 

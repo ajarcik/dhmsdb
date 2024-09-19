@@ -4,6 +4,7 @@ import time
 import pandas as pd
 import pandasql as ps
 import numpy as np
+import string
 #from collection import Counter
 
 #gc = gspread.oauth(credentials_filename='token.json')
@@ -155,13 +156,12 @@ def switch(nameofspreadsheet,tabname,gc):
     print("Done!!!")
 
 
-
-
-
 def get_info(gc, dbname, tabname, name, email):
   sh = gc.open(dbname)
   worksheet = sh.worksheet(tabname)
   df = pd.DataFrame(worksheet.get_all_records())
+  name = name.translate(str.maketrans('', '', string.punctuation))
+  df["name"] = df["name"].apply(lambda x : x.translate(str.maketrans('', '', string.punctuation)))
   query = f"""SELECT * FROM df WHERE name='{name}' and email='{email}'"""
   return ps.sqldf(query, locals())
 
@@ -169,6 +169,7 @@ def get_check_in_dict(gc, dbname, tabname):
   sh = gc.open(dbname)
   worksheet = sh.worksheet(tabname)
   df = pd.DataFrame(worksheet.get_all_records())
+  df["name"] = df["name"].apply(lambda x : x.translate(str.maketrans('', '', string.punctuation)))
   check_in_dict = {}
   for name in df["name"]:
     query = f"""SELECT name, checked_in FROM df WHERE name='{name}'"""
@@ -183,8 +184,9 @@ def get_check_in_status(gc, dbname, tabname):
 
   df_teach = pd.DataFrame(teachers.get_all_records())
   df_vol = pd.DataFrame(worksheet_vol.get_all_records())
+  df_vol["name"] = df_vol["name"].apply(lambda x : x.translate(str.maketrans('', '', string.punctuation)))
 
-  query = """SELECT df_teach.name, df_teach.room, df_teach.team, count(df_vol.name) as vols_assigned, sum(checked_in) as vols_checked_in FROM df_teach INNER JOIN df_vol on df_teach.name = df_vol.teacher GROUP BY df_teach.name"""
+  query = """SELECT df_teach.name, df_teach.room, count(df_vol.name) as vols_assigned, sum(checked_in) as vols_checked_in FROM df_teach INNER JOIN df_vol on df_teach.name = df_vol.teacher GROUP BY df_teach.name"""
 
   df = ps.sqldf(query, locals())
 
@@ -248,6 +250,6 @@ def reassign_vol(gc, dbname, tabname, name, new_teach):
   teach_cell = teachers.find(new_teach)
 
   worksheet_vol.update_cell(name_cell.row, name_cell.col + 2, new_teach)
-  worksheet_vol.update_cell(name_cell.row, name_cell.col + 3, teachers.cell(teach_cell.row, teach_cell.col + 2).value)
+  worksheet_vol.update_cell(name_cell.row, name_cell.col + 3, teachers.cell(teach_cell.row, teach_cell.col + 1).value)
 
   return None
