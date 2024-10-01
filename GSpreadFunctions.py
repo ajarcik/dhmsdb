@@ -21,15 +21,12 @@ The purpose of this CreateDatabaseSpreadsheet function is create a Google spread
 '''
 Needs to:
 '''
-def CreateDatabaseSpreadsheet(nameofspreadsheet,ArrayOfDates,gc,GoogleEmail):
-  sh = gc.create(nameofspreadsheet)
-  time.sleep(2)
-  sh = gc.open(nameofspreadsheet)
-  time.sleep(2)
-  for i in ArrayOfDates:
-    worksheet = sh.add_worksheet(title=i, rows=100, cols=20)
-  sh.share(GoogleEmail,perm_type='user',role='writer') 
-  print("Done!!!!")
+def create_new_event(date, sh):
+  
+  sh.add_worksheet(title=f"{date} - Volunteers", rows=100, cols=20) # Will need to update this row number to represent max number of volunteers
+  sh.add_worksheet(title=f"{date} - Feedback", rows=100, cols=20)
+
+  return None
 
 counter = 1
 def add_data_two(inputlist,gc,nameofspreadsheet,tabname):
@@ -231,5 +228,11 @@ def reassign_vol(vol_ws, teach_ws, name, new_teach):
 
   vol_ws.update_cell(name_cell.row, name_cell.col + 2, new_teach)
   vol_ws.update_cell(name_cell.row, name_cell.col + 3, teach_ws.cell(teach_cell.row, teach_cell.col + 1).value)
+
+  return None
+
+def add_vol(vol_ws, name, email):
+   
+  vol_ws.append_row([name, email, " ", " ", 0])
 
   return None

@@ -1,5 +1,5 @@
 import streamlit as st
-from GSpreadFunctions import get_info, get_check_in_status, get_check_in_dict, check_name_email_pair, mark_checked_in, reassign_vol
+from GSpreadFunctions import get_info, get_check_in_status, get_check_in_dict, check_name_email_pair, mark_checked_in, reassign_vol, add_vol, create_new_event
 import gspread
 import pandas as pd
 import pandasql as ps
@@ -70,6 +70,13 @@ def reassign_teahcer_clicked():
 def reassign_clicked():
     st.session_state.initial_setup = True
     reassign_vol(st.session_state.vol_ws, st.session_state.teacher_ws, st.session_state.reassign_name, st.session_state.reassign_teacher)
+
+def add_vol_clicked():
+    st.session_state.initial_setup = True
+    add_vol(st.session_state.vol_ws, st.session_state.new_vol, st.session_state.new_email)
+
+def new_event_clicked():
+    create_new_event(st.session_state.date_of_new_event, st.session_state.sh)
 
 def app() -> None:
 
@@ -171,9 +178,9 @@ def app() -> None:
         credentials_dict = toml.load(".streamlit/secrets.toml")
         credentials_dict = dict((k.lower(), v) for k,v in credentials_dict.items())
         gc = gspread.service_account_from_dict(credentials_dict)
-        sh = gc.open(current_year_db)
-        st.session_state.teacher_ws = sh.worksheet("Teachers")
-        st.session_state.vol_ws = sh.worksheet(current_event_sheet_vol)
+        st.session_state.sh = gc.open(current_year_db)
+        st.session_state.teacher_ws = st.session_state.sh.worksheet("Teachers")
+        st.session_state.vol_ws = st.session_state.sh.worksheet(current_event_sheet_vol)
 
         st.session_state.df_vol = pd.DataFrame(st.session_state.vol_ws.get_all_records())
         st.session_state.df_teach = pd.DataFrame(st.session_state.teacher_ws.get_all_records())
@@ -276,10 +283,10 @@ def app() -> None:
 
                 col20, col21 = st.columns([1,1])
 
-                with col20:
+                with col21:
 
                     st.markdown(
-                        "<h5 style='color: black;'>Re-assign Volunteer:</h5>",
+                        "<h5 style='color: black;'>Re-Assign Volunteer:</h5>",
                         unsafe_allow_html=True,
                     )
 
@@ -289,28 +296,26 @@ def app() -> None:
                     #     # Get historical data
                     #     st.write("Historical data will appear here")
 
-
                     st.session_state.reassign_teacher = st_free_text_select(label="New Teacher Assignment:", options=list(st.session_state.teachers["name"]), index=None, format_func=lambda x: x.title(), placeholder=' ', disabled=False, delay=300, label_visibility="visible")
 
-                    st.button("Confirm Re-assign", on_click=reassign_clicked, use_container_width=True, disabled=((st.session_state.reassign_name == None) or (st.session_state.reassign_teacher == None)))
+                    st.button("Assign Volunteer", on_click=reassign_clicked, use_container_width=True, disabled=((st.session_state.reassign_name == None) or (st.session_state.reassign_teacher == None)))
 
-                with col21:
+                with col20:
 
                     st.markdown(
                         "<h5 style='color: black;'>Add Volunteer:</h5>",
                         unsafe_allow_html=True,
                     )
 
-                    # st.session_state.new_vol = st_free_text_select(label="new vol name:", options=list(st.session_state.names["name"]), index=None, format_func=lambda x: x.title(), placeholder=' ', disabled=False, delay=300, label_visibility="visible")
+                    st.session_state.new_vol = st_free_text_select(label="Name:", options=[], index=None, format_func=lambda x: x.title(), placeholder=' ', disabled=False, delay=300, label_visibility="visible")
+
+                    st.session_state.new_email = st_free_text_select(label="Email:", options=[], index=None, format_func=lambda x: x.lower(), placeholder=' ', disabled=False, delay=300, label_visibility="visible")
+
+                    st.button("Add Volunteer", on_click=add_vol_clicked, use_container_width=True, disabled=((st.session_state.new_vol == None) or (st.session_state.new_email == None)))
 
                     # # if st.session_state.reassign_name != None:
                     # #     # Get historical data
                     # #     st.write("Historical data will appear here")
-
-
-                    # # st.session_state.reassign_teacher = st_free_text_select(label="New Teacher Assignment:", options=list(st.session_state.teachers["name"]), index=None, format_func=lambda x: x.title(), placeholder=' ', disabled=False, delay=300, label_visibility="visible")
-
-                    # st.button("Confirm Volunteer", on_click=reassign_clicked, use_container_width=True, disabled=((st.session_state.reassign_name == None) or (st.session_state.reassign_teacher == None)))
 
             with tab2:
                 st.error("This is not functional yet")
@@ -320,9 +325,9 @@ def app() -> None:
                 )
                 st.session_state.date_of_new_event = st.date_input("What is the date of the new event?", None)
 
-                st.session_state.volunteer_assignments = st.file_uploader("Upload your volunteer assignments below", type=['xlsx', 'csv'], help="Upload a csv or xlsx file with the names, emails, and teacher assignment for each volunteer.")
+                st.session_state.volunteer_list = st.file_uploader("Upload your volunteer list below", type=['xlsx', 'csv'], help="Upload a csv or xlsx file with the names, emails, and teacher assignment for each volunteer.")
 
-                st.button("Confirm New Event", use_container_width=True)
+                st.button("Confirm New Event", on_click=new_event_clicked, use_container_width=True, disabled=(st.session_state.date_of_new_event == None) or (st.session_state.volunteer_list == None))
 
     else:
 
