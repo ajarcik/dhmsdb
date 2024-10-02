@@ -5,6 +5,7 @@ import pandas as pd
 import pandasql as ps
 import numpy as np
 import string
+import random
 #from collection import Counter
 
 #gc = gspread.oauth(credentials_filename='token.json')
@@ -26,7 +27,11 @@ def create_new_event(date, sh):
   sh.add_worksheet(title=f"{date} - Volunteers", rows=100, cols=20) # Will need to update this row number to represent max number of volunteers
   sh.add_worksheet(title=f"{date} - Feedback", rows=100, cols=20)
 
-  return None
+  vol_ws = sh.worksheet(f"{date} - Volunteers")
+
+  vol_ws.append_row(["name", "email", "teacher", "room_number", "checked_in"])
+
+  return sh.worksheet(f"{date} - Volunteers")
 
 counter = 1
 def add_data_two(inputlist,gc,nameofspreadsheet,tabname):
@@ -231,8 +236,42 @@ def reassign_vol(vol_ws, teach_ws, name, new_teach):
 
   return None
 
-def add_vol(vol_ws, name, email):
+def add_vol(vol_ws, name, email, teacher="Not Assigned", room="Not Assigned"):
    
-  vol_ws.append_row([name, email, " ", " ", 0])
+  vol_ws.append_row([name, email, teacher, room, 0])
 
   return None
+
+def initial_assignments(vol_ws, teach_ws, grade_list, vol_list):
+
+  df_vols = pd.read_excel(vol_list)
+
+  print(df_vols)
+
+  teach_list = []
+  for grade in grade_list:
+    grade_cells = teach_ws.findall(grade)
+    time.sleep(1)
+    for cell in grade_cells:
+      teach_list.append((teach_ws.cell(cell.row, cell.col - 2).value, teach_ws.cell(cell.row, cell.col - 1).value))
+
+  teach_list_first_assign = teach_list.copy()
+
+  teach_count = {}
+  for teach in teach_list:
+    teach_count[teach[0]] = 0
+
+  for i in range(len(df_vols)):
+    if len(teach_list_first_assign) != 0:
+      teacher_tup = random.choice(teach_list_first_assign)
+      teach_list_first_assign.remove(teacher_tup)
+    else:
+      teach_list_first_assign = teach_list.copy()
+      teacher_tup = random.choice(teach_list_first_assign)
+      teach_list_first_assign.remove(teacher_tup)
+    teacher = teacher_tup[0]
+    room = teacher_tup[1]
+    teach_count[teacher] += 1
+    if teach_count[teacher] == (len(df_vols) // len(teach_list)) + 1:
+      teach_list.remove(teacher_tup)
+    add_vol(vol_ws, df_vols.iloc[i, 0], df_vols.iloc[i, 1], teacher, room)
