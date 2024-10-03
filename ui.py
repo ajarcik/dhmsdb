@@ -116,7 +116,7 @@ def new_event_clicked():
             initial_assignments(new_event, st.session_state.teacher_ws, st.session_state.teacher_grades, st.session_state.volunteer_list)
             st.session_state.event_created = True
         except:
-            st.session_state.api_error = True
+            st.session_state.assignment_error = True
 
 def app() -> None:
 
@@ -180,6 +180,8 @@ def app() -> None:
         st.session_state.reassigned = False
     if "api_error" not in st.session_state:
         st.session_state.api_error = False
+    if "assignment_error" not in st.session_state:
+        st.session_state.assignment_error = False
     
     
     # Page configuration
@@ -260,15 +262,15 @@ def app() -> None:
         credentials_dict = toml.load(".streamlit/secrets.toml")
         credentials_dict = dict((k.lower(), v) for k,v in credentials_dict.items())
         st.session_state.gc = gspread.service_account_from_dict(credentials_dict)
-        time.sleep(.2)
+        time.sleep(1)
         st.session_state.sh = st.session_state.gc.open(current_year_db)
-        time.sleep(.2)
+        time.sleep(1)
         st.session_state.teacher_ws = st.session_state.sh.worksheet("Teachers")
-        time.sleep(.2)
+        time.sleep(1)
         st.session_state.vol_ws = st.session_state.sh.worksheet(current_event_sheet_vol)
-        time.sleep(.2)
+        time.sleep(1)
         st.session_state.df_vol = pd.DataFrame(st.session_state.vol_ws.get_all_records())
-        time.sleep(.2)
+        time.sleep(1)
         st.session_state.df_teach = pd.DataFrame(st.session_state.teacher_ws.get_all_records())
 
         df_vol = st.session_state.df_vol
@@ -437,13 +439,6 @@ def app() -> None:
                         # #     st.write("Historical data will appear here")
 
             with tab2:
-                if st.session_state.create_table_error:
-                    st.error("An event already exists for this date. Please select a different date.")
-                    st.session_state.create_table_error = False
-
-                if st.session_state.api_error:
-                    st.error("An error occurred with the API. Please try again.")
-                    st.session_state.api_error = False
 
                 with st.container(border=True):
                     st.markdown(
@@ -454,6 +449,14 @@ def app() -> None:
                     if st.session_state.event_created:
                         st.success(f"Event for {st.session_state.date_of_new_event} was successfully created!")
                         st.session_state.event_created = False
+
+                    if st.session_state.create_table_error:
+                        st.error("An event already exists for this date. Please select a different date.")
+                        st.session_state.create_table_error = False
+
+                    if st.session_state.assignment_error:
+                        st.error("An error occurred with the API. Please try again.")
+                        st.session_state.assignment_error = False
 
                     st.session_state.volunteer_list = st.file_uploader("Upload your volunteer list below", type=['xlsx', 'csv'], help="Upload a csv or xlsx file with the names (one column) and emails for each volunteer. Make sure to include a header row.", key=st.session_state.vol_list_upload)
 
