@@ -455,7 +455,7 @@ def app() -> None:
                     with col7:
                         st.session_state.teacher_grades = st.multiselect("Which grades are apart of the event?", ["6", "7", "8"], key=st.session_state.grade_list)
 
-                    st.button("Confirm New Event", on_click=new_event_clicked, use_container_width=True, disabled=(st.session_state.date_of_new_event == None) or (st.session_state.volunteer_list == None))
+                    st.button("Confirm New Event", on_click=new_event_clicked, use_container_width=True, disabled=(st.session_state.date_of_new_event == None) or (st.session_state.volunteer_list == None) or (st.session_state.teacher_grades == []))
 
     else:
 
