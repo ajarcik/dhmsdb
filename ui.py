@@ -115,7 +115,8 @@ def new_event_clicked():
         try:
             initial_assignments(new_event, st.session_state.teacher_ws, st.session_state.teacher_grades, st.session_state.volunteer_list)
             st.session_state.event_created = True
-        except:
+        except Exception as e:
+            print(e)
             st.session_state.assignment_error = True
 
 def app() -> None:
