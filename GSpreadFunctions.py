@@ -25,11 +25,15 @@ Needs to:
 def create_new_event(date, sh):
   
   sh.add_worksheet(title=f"{date} - Volunteers", rows=100, cols=20) # Will need to update this row number to represent max number of volunteers
+  time.sleep(.2)
   sh.add_worksheet(title=f"{date} - Feedback", rows=100, cols=20)
+  time.sleep(.2)
 
   vol_ws = sh.worksheet(f"{date} - Volunteers")
+  time.sleep(.2)
 
   vol_ws.append_row(["name", "email", "teacher", "room_number", "checked_in"])
+  time.sleep(.2)
 
   return sh.worksheet(f"{date} - Volunteers")
 
@@ -221,6 +225,7 @@ def check_name_email_pair(df_vol, name, email):
 def mark_checked_in(ws, name, email):
 
   email_cell = ws.find(email)
+  time.sleep(.2)
 
   ws.update_cell(email_cell.row, email_cell.col + 3, 1)
 
@@ -229,16 +234,20 @@ def mark_checked_in(ws, name, email):
 def reassign_vol(vol_ws, teach_ws, name, new_teach):
 
   name_cell = vol_ws.find(name)
+  time.sleep(.2)
   teach_cell = teach_ws.find(new_teach)
+  time.sleep(.2)
 
   vol_ws.update_cell(name_cell.row, name_cell.col + 2, new_teach)
+  time.sleep(.2)
   vol_ws.update_cell(name_cell.row, name_cell.col + 3, teach_ws.cell(teach_cell.row, teach_cell.col + 1).value)
 
   return None
 
 def add_vol(vol_ws, name, email, teacher="Not Assigned", room="Not Assigned"):
-   
+  
   vol_ws.append_row([name, email, teacher, room, 0])
+  time.sleep(.2)
 
   return None
 
@@ -254,6 +263,7 @@ def initial_assignments(vol_ws, teach_ws, grade_list, vol_list):
     time.sleep(1)
     for cell in grade_cells:
       teach_list.append((teach_ws.cell(cell.row, cell.col - 2).value, teach_ws.cell(cell.row, cell.col - 1).value))
+      time.sleep(1)
 
   teach_list_first_assign = teach_list.copy()
 

@@ -55,9 +55,15 @@ def color_checked_in(name):
     return f'background-color: {color}'
 
 def date_selected():
-    st.session_state.refresh=False
-    st.session_state.current_event = st.session_state.temp_current_event
-    st.session_state.initial_setup = True
+    st.session_state.j += 1
+    st.session_state.date_key = f"switch_date_{st.session_state.j}"
+    if str(st.session_state.temp_current_event) + " - Volunteers" not in [sheet.title for sheet in st.session_state.sh.worksheets()]:
+        st.session_state.date_not_found = True
+    else:
+        st.session_state.refresh=False
+        st.session_state.current_event = st.session_state.temp_current_event
+        st.session_state.initial_setup = True
+        st.session_state.date_found = True
 
 def reassign_name_clicked():
     st.session_state.refresh=False
@@ -69,15 +75,31 @@ def reassign_clicked():
     st.session_state.j += 1
     st.session_state.assign_vol_key = f"assign_{st.session_state.j}"
     st.session_state.assign_teach_key = f"assign_teach_{st.session_state.j}"
-    st.session_state.initial_setup = True
-    reassign_vol(st.session_state.vol_ws, st.session_state.teacher_ws, st.session_state.reassign_name, st.session_state.reassign_teacher)
+    if len(st.session_state.df_vol[(st.session_state.df_vol["name"] == st.session_state.reassign_name) & (st.session_state.df_vol["teacher"] == st.session_state.reassign_teacher)]) != 0:
+        st.session_state.reassign_error = True
+    elif st.session_state.reassign_name not in list(st.session_state.df_vol["name"]) or st.session_state.reassign_teacher not in list(st.session_state.df_vol["teacher"]):
+        st.session_state.reassign_error = True
+    else:
+        st.session_state.reassigned = True
+        st.session_state.initial_setup = True
+        try:
+            reassign_vol(st.session_state.vol_ws, st.session_state.teacher_ws, st.session_state.reassign_name, st.session_state.reassign_teacher)
+        except:
+            st.session_state.api_error = True
 
 def add_vol_clicked():
     st.session_state.j += 1
     st.session_state.add_vol_key = f"add_{st.session_state.j}"
     st.session_state.add_vol_email_key = f"add_email_{st.session_state.j}"
-    st.session_state.initial_setup = True
-    add_vol(st.session_state.vol_ws, st.session_state.new_vol, st.session_state.new_email)
+    if st.session_state.new_email in list(st.session_state.df_vol["email"]):
+        st.session_state.add_dup_vol = True
+    else:
+        st.session_state.added_vol = True
+        st.session_state.initial_setup = True
+        try:
+            add_vol(st.session_state.vol_ws, st.session_state.new_vol, st.session_state.new_email)
+        except:
+            st.session_state.api_error = True
 
 def new_event_clicked():
     st.session_state.j += 1
@@ -90,7 +112,10 @@ def new_event_clicked():
         st.session_state.create_table_error = True
     
     if not st.session_state.create_table_error:
-        initial_assignments(new_event, st.session_state.teacher_ws, st.session_state.teacher_grades, st.session_state.volunteer_list)
+        try:
+            initial_assignments(new_event, st.session_state.teacher_ws, st.session_state.teacher_grades, st.session_state.volunteer_list)
+        except:
+            st.session_state.create_table_error = True
         st.session_state.event_created = True
 
 def app() -> None:
@@ -139,6 +164,22 @@ def app() -> None:
         st.session_state.add_vol_email_key = f"add_email_{st.session_state.j}"
     if "current_event" not in st.session_state:
         st.session_state.current_event = "2024-09-20"
+    if "date_not_found" not in st.session_state:
+        st.session_state.date_not_found = False
+    if "date_found" not in st.session_state:
+        st.session_state.date_found = False
+    if "date_key" not in st.session_state:
+        st.session_state.date_key = f"switch_date_{st.session_state.j}"
+    if "add_dup_vol" not in st.session_state:
+        st.session_state.add_dup_vol = False
+    if "added_vol" not in st.session_state:
+        st.session_state.added_vol = False
+    if "reassign_error" not in st.session_state:
+        st.session_state.reassign_error = False
+    if "reassigned" not in st.session_state:
+        st.session_state.reassigned = False
+    if "api_error" not in st.session_state:
+        st.session_state.api_error = False
     
     
     # Page configuration
@@ -218,14 +259,16 @@ def app() -> None:
 
         credentials_dict = toml.load(".streamlit/secrets.toml")
         credentials_dict = dict((k.lower(), v) for k,v in credentials_dict.items())
-        gc = gspread.service_account_from_dict(credentials_dict)
-        time.sleep(1)
-        st.session_state.sh = gc.open(current_year_db)
-        time.sleep(1)
+        st.session_state.gc = gspread.service_account_from_dict(credentials_dict)
+        time.sleep(.2)
+        st.session_state.sh = st.session_state.gc.open(current_year_db)
+        time.sleep(.2)
         st.session_state.teacher_ws = st.session_state.sh.worksheet("Teachers")
+        time.sleep(.2)
         st.session_state.vol_ws = st.session_state.sh.worksheet(current_event_sheet_vol)
-
+        time.sleep(.2)
         st.session_state.df_vol = pd.DataFrame(st.session_state.vol_ws.get_all_records())
+        time.sleep(.2)
         st.session_state.df_teach = pd.DataFrame(st.session_state.teacher_ws.get_all_records())
 
         df_vol = st.session_state.df_vol
@@ -283,7 +326,13 @@ def app() -> None:
 
         with col30:
             with st.popover("Change Event"):
-                st.session_state.temp_current_event = st.date_input("Select the date of the event")
+                if st.session_state.date_not_found:
+                    st.error("No event was found for this date. Please select a different date.")
+                    st.session_state.date_not_found = False
+                if st.session_state.date_found:
+                    st.success(f"Event date successfully changed to {st.session_state.current_event}.")
+                    st.session_state.date_found = False
+                st.session_state.temp_current_event = st.date_input("Select the date of the event", value=None, key=st.session_state.date_key)
                 st.button("Confirm", on_click=date_selected, use_container_width=True)
 
         with col1:
@@ -330,6 +379,23 @@ def app() -> None:
 
                     st.dataframe(st.session_state.df.style.map(color_checked_in, subset=vol_subset), height = (len(st.session_state.df) + 1) * 35 + 3,use_container_width=True)
 
+                    with st.empty():
+                        if st.session_state.add_dup_vol:
+                            st.error("This volunteer already exists in the database. Please try again.")
+                            st.session_state.add_dup_vol = False
+
+                        if st.session_state.added_vol:
+                            st.success("Volunteer successfully added!")
+                            st.session_state.added_vol = False
+
+                        if st.session_state.reassign_error:
+                            st.error("This volunteer is already assigned to this teacher or the volunteer/teacher does not exist in the database. Please try again.")
+                            st.session_state.reassign_error = False
+                        
+                        if st.session_state.reassigned:
+                            st.success("Volunteer successfully reassigned!")
+                            st.session_state.reassigned = False
+
                     col20, col21 = st.columns([1,1])
 
                     with col21:
@@ -371,15 +437,15 @@ def app() -> None:
                     st.error("An event already exists for this date. Please select a different date.")
                     st.session_state.create_table_error = False
 
-                if st.session_state.event_created:
-                    st.success(f"Event for {st.session_state.date_of_new_event} was successfully created!")
-                    st.session_state.event_created = False
-
                 with st.container(border=True):
                     st.markdown(
                         "<h5 style='color: black;'>Create New Event:</h5>",
                         unsafe_allow_html=True,
                     )
+
+                    if st.session_state.event_created:
+                        st.success(f"Event for {st.session_state.date_of_new_event} was successfully created!")
+                        st.session_state.event_created = False
 
                     st.session_state.volunteer_list = st.file_uploader("Upload your volunteer list below", type=['xlsx', 'csv'], help="Upload a csv or xlsx file with the names (one column) and emails for each volunteer. Make sure to include a header row.", key=st.session_state.vol_list_upload)
 
