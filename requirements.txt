@@ -6,6 +6,7 @@ google-auth-oauthlib==1.2.1
 google-pasta==0.2.0
 googleapis-common-protos==1.65.0
 gspread==6.1.2
+openpyxl==3.1.2
 pandas==2.2.2
 pandasql==0.7.3
 streamlit==1.37.0
