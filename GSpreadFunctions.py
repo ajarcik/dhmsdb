@@ -246,9 +246,8 @@ def reassign_vol(vol_ws, teach_ws, name, new_teach):
 
 def add_vol(vol_ws, name, email, teacher="Not Assigned", room="Not Assigned"):
   
-  time.sleep(.2)
+  time.sleep(.5)
   vol_ws.append_row([name, email, teacher, room, 0])
-  time.sleep(.2)
 
   return None
 
@@ -258,13 +257,13 @@ def initial_assignments(vol_ws, teach_ws, grade_list, vol_list):
 
   teach_list = []
   for grade in grade_list:
-    time.sleep(.2)
+    time.sleep(1)
     grade_cells = teach_ws.findall(grade)
-    time.sleep(.2)
+    time.sleep(1)
     for cell in grade_cells:
-      time.sleep(.2)
+      time.sleep(1)
       teach_list.append((teach_ws.cell(cell.row, cell.col - 2).value, teach_ws.cell(cell.row, cell.col - 1).value))
-      time.sleep(.2)
+      time.sleep(1)
 
   teach_list_first_assign = teach_list.copy()
 
