@@ -9,7 +9,7 @@ from itertools import chain
 import toml
 import time
 import re
-
+import json
 
 def refresh_clicked():
     st.session_state.initial_setup = True
@@ -64,6 +64,9 @@ def date_selected():
         st.session_state.current_event = st.session_state.temp_current_event
         st.session_state.initial_setup = True
         st.session_state.date_found = True
+        st.session_state.config["Date"] = str(st.session_state.current_event)
+        with open("config.json", "w") as f:
+            json.dump(st.session_state.config, f)
 
 def reassign_name_clicked():
     st.session_state.refresh=False
@@ -109,18 +112,20 @@ def new_event_clicked():
     try:
         new_event = create_new_event(st.session_state.date_of_new_event, st.session_state.sh)
     except:
-        st.session_state.create_table_error = True
+        st.session_state.assignment_error = True
     
-    if not st.session_state.create_table_error:
-        # try:
-        initial_assignments(new_event, st.session_state.teacher_ws, st.session_state.teacher_grades, st.session_state.volunteer_list)
-        st.session_state.event_created = True
-        # except Exception as e:
-        #     print(e)
-        #     st.session_state.assignment_error = True
+    if not st.session_state.assignment_error:
+        try:
+            initial_assignments(new_event, st.session_state.teacher_ws, st.session_state.teacher_grades, st.session_state.volunteer_list)
+            st.session_state.event_created = True
+        except Exception as e:
+            print(e)
+            st.session_state.assignment_error = True
 
 def app() -> None:
 
+    with open("config.json", "r") as f:
+        st.session_state.config = json.load(f)
     if "check_in" not in st.session_state:
         st.session_state.check_in = False
     if "initial_setup" not in st.session_state:
@@ -163,8 +168,6 @@ def app() -> None:
         st.session_state.assign_teach_key = f"assign_teach_{st.session_state.j}"
     if "add_vol_email_key" not in st.session_state:
         st.session_state.add_vol_email_key = f"add_email_{st.session_state.j}"
-    if "current_event" not in st.session_state:
-        st.session_state.current_event = "2024-09-20"
     if "date_not_found" not in st.session_state:
         st.session_state.date_not_found = False
     if "date_found" not in st.session_state:
@@ -183,7 +186,8 @@ def app() -> None:
         st.session_state.api_error = False
     if "assignment_error" not in st.session_state:
         st.session_state.assignment_error = False
-    
+    if "current_event" not in st.session_state:
+        st.session_state.current_event = st.session_state.config["Date"]
     
     # Page configuration
     st.set_page_config(
@@ -460,6 +464,18 @@ def app() -> None:
                         st.session_state.assignment_error = False
 
                     st.session_state.volunteer_list = st.file_uploader("Upload your volunteer list below", type=['xlsx', 'csv'], help="Upload a csv or xlsx file with the names (one column) and emails for each volunteer. Make sure to include a header row.", key=st.session_state.vol_list_upload)
+
+                    if st.session_state.volunteer_list is not None:
+                        if st.session_state.volunteer_list.name.split(".")[-1] == "xlsx":
+                            test = pd.read_excel(st.session_state.volunteer_list)
+                        else:
+                            test = pd.read_csv(st.session_state.volunteer_list)
+
+                        test.columns = test.columns.str.lower()
+
+                        if "name" not in test.columns or "email" not in test.columns:
+                            st.error("Please make sure your file contains columns titled 'name' and 'email' in that order.")
+                            st.session_state.volunteer_list = None
 
                     col6, col7 = st.columns([1,1])
                     with col6:

@@ -6,6 +6,7 @@ import pandasql as ps
 import numpy as np
 import string
 import random
+import streamlit as st
 #from collection import Counter
 
 #gc = gspread.oauth(credentials_filename='token.json')
@@ -23,17 +24,26 @@ The purpose of this CreateDatabaseSpreadsheet function is create a Google spread
 Needs to:
 '''
 def create_new_event(date, sh):
+
+  if str(date) + " - Volunteers" not in [sheet.title for sheet in st.session_state.sh.worksheets()]:
   
-  sh.add_worksheet(title=f"{date} - Volunteers", rows=100, cols=20) # Will need to update this row number to represent max number of volunteers
-  time.sleep(.2)
-  sh.add_worksheet(title=f"{date} - Feedback", rows=100, cols=20)
-  time.sleep(.2)
+    sh.add_worksheet(title=f"{date} - Volunteers", rows=100, cols=20) # Will need to update this row number to represent max number of volunteers
+    time.sleep(.2)
+    sh.add_worksheet(title=f"{date} - Feedback", rows=100, cols=20)
+    time.sleep(.2)
 
-  vol_ws = sh.worksheet(f"{date} - Volunteers")
-  time.sleep(.2)
+    vol_ws = sh.worksheet(f"{date} - Volunteers")
+    time.sleep(.2)
 
-  vol_ws.append_row(["name", "email", "teacher", "room_number", "checked_in"])
-  time.sleep(.2)
+    vol_ws.append_row(["name", "email", "teacher", "room_number", "checked_in"])
+    time.sleep(.2)
+
+  else:
+    vol_ws = sh.worksheet(f"{date} - Volunteers")
+    vol_ws.clear()
+    time.sleep(.2)
+    vol_ws.append_row(["name", "email", "teacher", "room_number", "checked_in"])
+    time.sleep(.2)
 
   return sh.worksheet(f"{date} - Volunteers")
 
@@ -257,13 +267,11 @@ def initial_assignments(vol_ws, teach_ws, grade_list, vol_list):
 
   teach_list = []
   for grade in grade_list:
-    time.sleep(1)
+    time.sleep(.5)
     grade_cells = teach_ws.findall(grade)
-    time.sleep(1)
     for cell in grade_cells:
-      time.sleep(1)
+      time.sleep(.5)
       teach_list.append((teach_ws.cell(cell.row, cell.col - 2).value, teach_ws.cell(cell.row, cell.col - 1).value))
-      time.sleep(1)
 
   teach_list_first_assign = teach_list.copy()
 
