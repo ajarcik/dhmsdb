@@ -114,9 +114,9 @@ def new_event_clicked():
     if not st.session_state.create_table_error:
         try:
             initial_assignments(new_event, st.session_state.teacher_ws, st.session_state.teacher_grades, st.session_state.volunteer_list)
+            st.session_state.event_created = True
         except:
-            st.session_state.create_table_error = True
-        st.session_state.event_created = True
+            st.session_state.api_error = True
 
 def app() -> None:
 
@@ -396,6 +396,10 @@ def app() -> None:
                             st.success("Volunteer successfully reassigned!")
                             st.session_state.reassigned = False
 
+                        if st.session_state.api_error:
+                            st.error("An error occurred with the API. Please try again.")
+                            st.session_state.api_error = False
+
                     col20, col21 = st.columns([1,1])
 
                     with col21:
@@ -436,6 +440,10 @@ def app() -> None:
                 if st.session_state.create_table_error:
                     st.error("An event already exists for this date. Please select a different date.")
                     st.session_state.create_table_error = False
+
+                if st.session_state.api_error:
+                    st.error("An error occurred with the API. Please try again.")
+                    st.session_state.api_error = False
 
                 with st.container(border=True):
                     st.markdown(
