@@ -112,12 +112,12 @@ def new_event_clicked():
         st.session_state.create_table_error = True
     
     if not st.session_state.create_table_error:
-        try:
-            initial_assignments(new_event, st.session_state.teacher_ws, st.session_state.teacher_grades, st.session_state.volunteer_list)
-            st.session_state.event_created = True
-        except Exception as e:
-            print(e)
-            st.session_state.assignment_error = True
+        # try:
+        initial_assignments(new_event, st.session_state.teacher_ws, st.session_state.teacher_grades, st.session_state.volunteer_list)
+        st.session_state.event_created = True
+        # except Exception as e:
+        #     print(e)
+        #     st.session_state.assignment_error = True
 
 def app() -> None:
 
