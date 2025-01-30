@@ -435,7 +435,7 @@ def app() -> None:
                             unsafe_allow_html=True,
                         )
 
-                        st.session_state.new_vol = st_free_text_select(label="Name:", options=[], index=None, format_func=lambda x: x.title(), placeholder=' ', disabled=False, delay=300, label_visibility="visible", key=st.session_state.add_vol_key)
+                        st.session_state.new_vol = st_free_text_select(label="Name:", options=[], index=None, placeholder=' ', disabled=False, delay=300, label_visibility="visible", key=st.session_state.add_vol_key)
 
                         st.session_state.new_email = st_free_text_select(label="Email:", options=[], index=None, format_func=lambda x: x.lower(), placeholder=' ', disabled=False, delay=300, label_visibility="visible", key=st.session_state.add_vol_email_key)
 
@@ -552,7 +552,7 @@ def app() -> None:
 
                 st.markdown("**Name:**")
 
-                st.session_state.name = st_free_text_select(label="Name:", options=list(st.session_state.names["name"]), index=None, format_func=lambda x: x.title(), placeholder=' ', disabled=False, delay=300, label_visibility="collapsed")
+                st.session_state.name = st_free_text_select(label="Name:", options=list(st.session_state.names["name"]), index=None, placeholder=' ', disabled=False, delay=300, label_visibility="collapsed")
                 
                 st.markdown("**Email:**")
 
