@@ -285,6 +285,8 @@ def app() -> None:
         st.session_state.emails = ps.sqldf("""SELECT email FROM df_vol""", locals())
         st.session_state.teachers = ps.sqldf(f"""SELECT DISTINCT teacher FROM df_vol""", locals())
 
+        print(st.session_state.teachers)
+
         st.session_state.df = get_check_in_status(st.session_state.df_vol, st.session_state.df_teach)
         st.session_state.check_in_dict = get_check_in_dict(st.session_state.df_vol)
 
@@ -416,13 +418,13 @@ def app() -> None:
                             unsafe_allow_html=True,
                         )
 
-                        st.session_state.reassign_name = st_free_text_select(label="Name:", options=list(st.session_state.names["name"]), index=None, format_func=lambda x: x.title(), placeholder=' ', disabled=False, delay=300, label_visibility="visible", key=st.session_state.assign_vol_key)
+                        st.session_state.reassign_name = st_free_text_select(label="Name:", options=list(st.session_state.names["name"]), index=None, placeholder=' ', disabled=False, delay=300, label_visibility="visible", key=st.session_state.assign_vol_key)
 
                         # if st.session_state.reassign_name != None:
                         #     # Get historical data
                         #     st.write("Historical data will appear here")
 
-                        st.session_state.reassign_teacher = st_free_text_select(label="New Teacher Assignment:", options=list(st.session_state.teachers["teacher"]), index=None, format_func=lambda x: x.title(), placeholder=' ', disabled=False, delay=300, label_visibility="visible", key=st.session_state.assign_teach_key)
+                        st.session_state.reassign_teacher = st_free_text_select(label="New Teacher Assignment:", options=list(st.session_state.teachers["teacher"]), index=None, placeholder=' ', disabled=False, delay=300, label_visibility="visible", key=st.session_state.assign_teach_key)
 
                         st.button("Assign Volunteer", on_click=reassign_clicked, use_container_width=True, disabled=((st.session_state.reassign_name == None) or (st.session_state.reassign_teacher == None)))
 
