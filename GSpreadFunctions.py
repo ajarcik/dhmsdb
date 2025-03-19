@@ -256,22 +256,30 @@ def reassign_vol(vol_ws, teach_ws, name, new_teach):
 
 def add_vol(vol_ws, name, email, teacher="Not Assigned", room="Not Assigned"):
   
-  time.sleep(.5)
+  time.sleep(.1)
   vol_ws.append_row([name, email, teacher, room, 0])
 
   return None
 
-def initial_assignments(vol_ws, teach_ws, grade_list, vol_list):
+def initial_assignments(vol_ws, teach_ws, teacher_list, vol_list):
 
   df_vols = pd.read_excel(vol_list)
+  df_teach = pd.read_excel(teacher_list)
+
+  df_teach.columns = [col.lower() for col in df_teach.columns]
+  df_vols.columns = [col.lower() for col in df_vols.columns]
+
+  for i in range(len(df_teach)):
+     row = df_teach.iloc[i,:]
+     if row["teacher"] not in list(st.session_state.df_teach["name"]):
+        time.sleep(.1)
+        teach_ws.append_row([row["teacher"], row["room Number"], "n/a"])
+
+  st.session_state.df_teach = pd.DataFrame(teach_ws.get_all_records())
 
   teach_list = []
-  for grade in grade_list:
-    time.sleep(.5)
-    grade_cells = teach_ws.findall(grade)
-    for cell in grade_cells:
-      time.sleep(.5)
-      teach_list.append((teach_ws.cell(cell.row, cell.col - 2).value, teach_ws.cell(cell.row, cell.col - 1).value))
+  for i in range(len(df_teach)):
+    teach_list.append((df_teach.iloc[i, 0], df_teach.iloc[i, 1]))
 
   teach_list_first_assign = teach_list.copy()
 

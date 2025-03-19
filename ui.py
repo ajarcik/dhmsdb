@@ -107,8 +107,9 @@ def add_vol_clicked():
 def new_event_clicked():
     st.session_state.j += 1
     st.session_state.vol_list_upload = f"vol_{st.session_state.j}"
+    st.session_state.teach_list_upload = f"teach_{st.session_state.j}"
     st.session_state.new_event_date = f"date_{st.session_state.j}"
-    st.session_state.grade_list = f"grade_{st.session_state.j}"
+    # st.session_state.grade_list = f"grade_{st.session_state.j}"
     try:
         new_event = create_new_event(st.session_state.date_of_new_event, st.session_state.sh)
     except:
@@ -116,7 +117,7 @@ def new_event_clicked():
     
     if not st.session_state.assignment_error:
         try:
-            initial_assignments(new_event, st.session_state.teacher_ws, st.session_state.teacher_grades, st.session_state.volunteer_list)
+            initial_assignments(new_event, st.session_state.teacher_ws, st.session_state.teacher_list, st.session_state.volunteer_list)
             st.session_state.event_created = True
         except Exception as e:
             print(e)
@@ -156,6 +157,8 @@ def app() -> None:
         st.session_state.j = 1
     if "vol_list_upload" not in st.session_state:
         st.session_state.vol_list_upload = f"vol_{st.session_state.j}"
+    if "teach_list_upload" not in st.session_state:
+        st.session_state.teach_list_upload = f"teach_{st.session_state.j}"
     if "new_event_date" not in st.session_state:
         st.session_state.new_event_date = f"date_{st.session_state.j}"
     if "grade_list" not in st.session_state:
@@ -232,10 +235,6 @@ def app() -> None:
                 visibility: hidden;
             }
 
-        div[data-testid=stSidebarCollapseButton] { 
-                display: none;    
-            }
-
         .st-emotion-cache-1cyulp7 {
                 display: none;
             }
@@ -291,11 +290,11 @@ def app() -> None:
         st.session_state.check_in_dict = get_check_in_dict(st.session_state.df_vol)
 
     with st.sidebar:
-        st.button(
-            r"$\LARGE{\textsf{x}}$",
-            on_click=close_side,
-            type="primary",
-        )
+        # st.button(
+        #     r"$\LARGE{\textsf{x}}$",
+        #     on_click=close_side,
+        #     type="primary",
+        # )
 
         st.markdown(
                 "<h1 style='text-align: center; color: black;'>Admin Login</h1>",
@@ -465,7 +464,10 @@ def app() -> None:
                         st.error("An error occurred with the API. Please try again.")
                         st.session_state.assignment_error = False
 
+                    st.session_state.date_of_new_event = st.date_input("What is the date of the new event?", None, key=st.session_state.new_event_date)
+
                     st.session_state.volunteer_list = st.file_uploader("Upload your volunteer list below", type=['xlsx', 'csv'], help="Upload a csv or xlsx file with the names (one column) and emails for each volunteer. Make sure to include a header row.", key=st.session_state.vol_list_upload)
+                    st.session_state.teacher_list = st.file_uploader("Upload your teacher list below", type=['xlsx', 'csv'], help="Upload a csv or xlsx file with the teacher names (one column) and grades for each teacher. Make sure to include a header row.", key=st.session_state.teach_list_upload)
 
                     if st.session_state.volunteer_list is not None:
                         if st.session_state.volunteer_list.name.split(".")[-1] == "xlsx":
@@ -479,13 +481,19 @@ def app() -> None:
                             st.error("Please make sure your file contains columns titled 'name' and 'email' in that order.")
                             st.session_state.volunteer_list = None
 
-                    col6, col7 = st.columns([1,1])
-                    with col6:
-                        st.session_state.date_of_new_event = st.date_input("What is the date of the new event?", None, key=st.session_state.new_event_date)
-                    with col7:
-                        st.session_state.teacher_grades = st.multiselect("Which grades are apart of the event?", ["6", "7", "8"], key=st.session_state.grade_list)
+                    if st.session_state.teacher_list is not None:
+                        if st.session_state.teacher_list.name.split(".")[-1] == "xlsx":
+                            test = pd.read_excel(st.session_state.teacher_list)
+                        else:
+                            test = pd.read_csv(st.session_state.teacher_list)
 
-                    st.button("Confirm New Event", on_click=new_event_clicked, use_container_width=True, disabled=(st.session_state.date_of_new_event == None) or (st.session_state.volunteer_list == None) or (st.session_state.teacher_grades == []))
+                        test.columns = test.columns.str.lower()
+
+                        if "teacher" not in test.columns or "room number" not in test.columns:
+                            st.error("Please make sure your file contains columns titled 'teacher' and 'room number' in that order.")
+                            st.session_state.volunteer_list = None
+
+                    st.button("Confirm New Event", on_click=new_event_clicked, use_container_width=True, disabled=(st.session_state.date_of_new_event == None) or (st.session_state.volunteer_list == None) or (st.session_state.teacher_list == None))
 
     else:
 
