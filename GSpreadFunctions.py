@@ -234,6 +234,7 @@ def check_name_email_pair(df_vol, name, email):
   
 def mark_checked_in(ws, name, email):
 
+  time.sleep(.2)
   email_cell = ws.find(email)
   time.sleep(.2)
 
@@ -273,7 +274,7 @@ def initial_assignments(vol_ws, teach_ws, teacher_list, vol_list):
      row = df_teach.iloc[i,:]
      if row["teacher"] not in list(st.session_state.df_teach["name"]):
         time.sleep(.1)
-        teach_ws.append_row([row["teacher"], row["room Number"], "n/a"])
+        teach_ws.append_row([row["teacher"], row["room number"], "n/a"])
 
   st.session_state.df_teach = pd.DataFrame(teach_ws.get_all_records())
 
